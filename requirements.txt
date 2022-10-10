@@ -1,0 +1,6 @@
+matplotlib
+PyQt5
+glob
+os
+numpy
+pandas
