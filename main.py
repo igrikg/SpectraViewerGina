@@ -1,33 +1,17 @@
-# This is a sample Python script.
-import pandas
 import numpy as np
+from DataClass import dataSpec
+from DataClass import getScanNames
+
+from matplotlib.widgets import MultiCursor
 import matplotlib.pyplot as plt
-import os,glob
-from dataclass import dataSpec
-def getScanNames(dirPath) :
-    dirPath=dirPath.replace('~',os.path.expanduser('~'),1);
-    listScans=list(map(lambda x: x[:x.rfind('.')],glob.glob('*.dat',root_dir=dirPath)))
-    return listScans
+from matplotlib.backend_tools import Cursors
 
-
-def getSpectras (dirPath,ScanName) :
-    dirPath=dirPath.replace('~',os.path.expanduser('~'),1);
-    ScanData = pandas.read_csv(dirPath+ScanName+'.dat', sep='\t')
-    listSpectrum=glob.glob(ScanName+'_*.sub',root_dir=dirPath)
-    listSpectrum.sort(key=lambda elemStr: int(elemStr[elemStr.rfind('_')+1:-4]))
-    i=0;
-    for specFile in listSpectrum:
-        array = np.loadtxt(dirPath+specFile).transpose()
-        if (not i): resultSpectra=np.zeros((ScanData.values.shape[0],array.shape[0],array.shape[1]))
-        resultSpectra[i]=array
-        i+=1
-    return ScanData,resultSpectra
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    dirpath='~/Documents/GinaSpectrum/'
-    ScanList = getScanNames(dirpath)
-    a=dataSpec(dirpath,ScanList[0])
+    DirPath = '~/Documents/GinaSpectrum/'
+    ScanList = getScanNames(DirPath)
+    a = dataSpec(DirPath, ScanList[0])
     a.update()
 
 #    ScanList=getScanNames('~/Documents/GinaSpectrum/')
@@ -41,4 +25,26 @@ if __name__ == '__main__':
 
 
 
+fig, axs = plt.subplots(len(Cursors), figsize=(6, len(Cursors) + 0.5),
+                        gridspec_kw={'hspace': 0})
+fig.suptitle('Hover over an Axes to see alternate Cursors')
 
+for cursor, ax in zip(Cursors, axs):
+    ax.cursor_to_use = cursor
+    ax.text(0.5, 0.5, cursor.name,
+            horizontalalignment='center', verticalalignment='center')
+    ax.set(xticks=[], yticks=[])
+
+
+def hover(event):
+    if fig.canvas.widgetlock.locked():
+        # Don't do anything if the zoom/pan tools have been enabled.
+        return
+
+    fig.canvas.set_cursor(
+        event.inaxes.cursor_to_use if event.inaxes else Cursors.POINTER)
+
+
+fig.canvas.mpl_connect('motion_notify_event', hover)
+
+plt.show()
