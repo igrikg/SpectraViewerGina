@@ -1,3 +1,7 @@
-pandas
-glob
+matplotlib
+PyQt5
 numpy
+pandas
+plotpy
+scipy
+PythonQwt
