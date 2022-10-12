@@ -58,12 +58,7 @@ class dataSpec:
                 if (not i): self.ResultSpectra = np.zeros(
                     (self.ScanData.values.shape[0], array.shape[0], array.shape[1]))
                 self.ResultSpectra[i] = array
-                i += 1
-
 def getScanNames(dirPath):
     dirPath = dirPath.replace('~', os.path.expanduser('~'), 1)
     listScans = list(map(lambda x: x[:x.rfind('.')], glob.glob('*.dat', root_dir=dirPath)))
     return listScans
-
-if __name__ == "__main__":
-    pass

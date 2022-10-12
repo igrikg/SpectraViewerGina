@@ -4,3 +4,4 @@ numpy
 pandas
 plotpy
 scipy
+PythonQwt

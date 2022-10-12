@@ -1,39 +1,51 @@
-from scipy.ndimage import gaussian_filter
-from plotpy.plot import ImageDialog
-from plotpy.builder import make
+from matplotlib.widgets import EllipseSelector, RectangleSelector
+import numpy as np
+import matplotlib.pyplot as plt
 
-def imshow(x, y, data, filter_area, yreverse=True):
-    win = ImageDialog(edit=False, toolbar=True, wintitle="Image filter demo",
-                      options=dict(xlabel="x (cm)", ylabel="y (cm)",
-                                   yreverse=yreverse))
-    image = make.xyimage(x, y, data)
-    plot = win.get_plot()
-    plot.add_item(image)
-    xmin, xmax, ymin, ymax = filter_area
-    flt = make.imagefilter(xmin, xmax, ymin, ymax, image,
-                           filter=lambda x, y, data: gaussian_filter(data, 5))
-    plot.add_item(flt, z=1)
-    plot.replot()
-    win.show()
-    win.exec_()
 
-def test():
-    """Test"""
-    # -- Create QApplication
-    import guidata
-    _app = guidata.qapplication()
-    # --
-    from plotpy.tests.imagexy import compute_image
-    x, y, data = compute_image()
-    imshow(x, y, data, filter_area=(-3., -1., 0., 2.), yreverse=False)
-    # --
-    import os.path as osp, numpy as np
-    from plotpy import io
-    filename = osp.join(osp.dirname(__file__), "brain.png")
-    data = io.imread(filename, to_grayscale=True)
-    x = np.linspace(0, 30., data.shape[1])
-    y = np.linspace(0, 30., data.shape[0])
-    imshow(x, y, data, filter_area=(10, 20, 5, 15))
+def select_callback(eclick, erelease):
+    """
+    Callback for line selection.
 
-if __name__ == "__main__":
-    test()
+    *eclick* and *erelease* are the press and release events.
+    """
+    x1, y1 = eclick.xdata, eclick.ydata
+    x2, y2 = erelease.xdata, erelease.ydata
+    print(f"({x1:3.2f}, {y1:3.2f}) --> ({x2:3.2f}, {y2:3.2f})")
+    print(f"The buttons you used were: {eclick.button} {erelease.button}")
+
+
+def toggle_selector(event):
+    print('Key pressed.')
+    if event.key == 't':
+        for selector in selectors:
+            name = type(selector).__name__
+            if selector.active:
+                print(f'{name} deactivated.')
+                selector.set_active(False)
+            else:
+                print(f'{name} activated.')
+                selector.set_active(True)
+
+
+fig = plt.figure(constrained_layout=True)
+axs = fig.subplots(2)
+
+N = 100000  # If N is large one can see improvement by using blitting.
+x = np.linspace(0, 10, N)
+
+selectors = []
+for ax, selector_class in zip(axs, [RectangleSelector, EllipseSelector]):
+    ax.plot(x, np.sin(2*np.pi*x))  # plot something
+    ax.set_title(f"Click and drag to draw a {selector_class.__name__}.")
+    selectors.append(selector_class(
+        ax, select_callback,
+        useblit=True,
+        button=[1, 3],  # disable middle button
+        minspanx=5, minspany=5,
+        spancoords='pixels',
+        interactive=True))
+    fig.canvas.mpl_connect('key_press_event', toggle_selector)
+axs[0].set_title("Press 't' to toggle the selectors on and off.\n"
+                 + axs[0].get_title())
+plt.show()
