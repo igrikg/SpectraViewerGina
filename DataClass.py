@@ -1,6 +1,11 @@
 import os,pandas,glob
 import numpy as np
 
+def getScanNames(dirPath) :
+    dirPath=dirPath.replace('~',os.path.expanduser('~'),1)
+    listScans=list(map(lambda x: os.path.split(x[:x.rfind('.')])[1],glob.glob(os.path.normpath(dirPath+'/*.dat'))))
+    return listScans
+
 class dataSpec:
     '''
         dirPath - path to spectrrum folder
@@ -9,17 +14,18 @@ class dataSpec:
     def __init__(self, DirPath, ScanName):
         self.DirPath=DirPath
         self.ScanName=ScanName
-        self.DirPath = self.DirPath.replace('~', os.path.expanduser('~'), 1);
+        self.DirPath = self.DirPath.replace('~', os.path.expanduser('~'), 1)
+        self.DirPath = os.path.normpath(self.DirPath)
         self.ResultSpectra=None
         self.loadScan()
         self.loadSpectrum()
     '''Load Scan table'''
     def loadScan(self):
-        self.ScanData = pandas.read_csv(self.DirPath + self.ScanName + '.dat', sep='\t')
+        self.ScanData = pandas.read_csv(self.DirPath +"\\"+ self.ScanName + '.dat', sep='\t')
 
     '''Load Sspectrums'''
     def loadSpectrum(self):
-        self.ScanData = pandas.read_csv(self.DirPath + self.ScanName + '.dat', sep='\t')
+        self.ScanData = pandas.read_csv(self.DirPath +"\\"+ self.ScanName + '.dat', sep='\t')
         self.ListSpectrum = glob.glob(self.ScanName + '_*.sub', root_dir=self.DirPath)
         self.ListSpectrum.sort(key=lambda elemStr: int(elemStr[elemStr.rfind('_') + 1:-4]))
         i = 0;
@@ -47,3 +53,4 @@ class dataSpec:
                 i += 1
 
 if __name__ == "__main__":
+    pass
