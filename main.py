@@ -9,7 +9,13 @@ from matplotlib.backend_tools import Cursors
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    DirPath = '~/Documents/GinaSpectrum/'
+    import platform,os
+
+    if platform.system()== 'Windows':
+        DirPath = os.getcwd()+"/data/"
+    else:
+        DirPath = '~/Documents/GinaSpectrum/'
+
     ScanList = getScanNames(DirPath)
     a = dataSpec(DirPath, ScanList[0])
     a.update()
