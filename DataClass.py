@@ -31,7 +31,7 @@ class dataSpec:
     def loadSpectrum(self):
         '''Load Sspectrums'''
         self.ScanData = pandas.read_csv(self.DirPath +"\\"+ self.ScanName + '.dat', sep='\t')
-        self.ListSpectrum = glob.glob(self.ScanName + '_*.sub', root_dir=self.DirPath)
+        self.ListSpectrum = list(map(lambda x: os.path.basename(x), glob.glob(self.DirPath+"\\"+self.ScanName + '_*.sub')))
         self.ListSpectrum.sort(key=lambda elemStr: int(elemStr[elemStr.rfind('_') + 1:-4]))
         i = 0
 
@@ -48,7 +48,7 @@ class dataSpec:
         shape = self.ScanData.values.shape
         self.loadScan()
         if shape != self.ScanData.values.shape and self.ScanData.values.shape[0] != 0:
-            self.ListSpectrum = glob.glob(self.ScanName + '_*.sub', root_dir=dirPath)
+            self.ListSpectrum = list(map(lambda x: os.path.basename(x), glob.glob(self.DirPath+"\\"+self.ScanName + '_*.sub')))
             self.ListSpectrum.sort(key=lambda elemStr: int(elemStr[elemStr.rfind('_') + 1:-4]))
             if self.ResultSpectra is None:
                 i = 0
@@ -62,7 +62,8 @@ class dataSpec:
                 i += 1
 def getScanNames(dirPath):
     dirPath = dirPath.replace('~', os.path.expanduser('~'), 1)
-    listScans = list(map(lambda x: x[:x.rfind('.')], glob.glob('*.dat', root_dir=dirPath)))
+    listScans = list(map(lambda x: os.path.basename(x[:x.rfind('.')]), glob.glob(os.path.normpath(dirPath+'/*.dat'))))
+
     return listScans
 
 if __name__ == '__main__':
