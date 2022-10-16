@@ -4,16 +4,13 @@ import pandas
 
 import numpy as np
 
-def getScanNames(dirPath) :
-    dirPath=dirPath.replace('~',os.path.expanduser('~'),1)
-    listScans=list(map(lambda x: os.path.split(x[:x.rfind('.')])[1],glob.glob(os.path.normpath(dirPath+'/*.dat'))))
-    return listScans
 
 class dataSpec:
     '''
         dirPath - path to spectrrum folder
         ScanName - file name for *.dat file scan
     '''
+
     def __init__(self, DirPath, ScanName):
         self.DirPath=DirPath
         self.ScanName=ScanName
@@ -63,6 +60,10 @@ class dataSpec:
                     (self.ScanData.values.shape[0], array.shape[0], array.shape[1]))
                 self.ResultSpectra[i] = array
                 i += 1
+def getScanNames(dirPath):
+    dirPath = dirPath.replace('~', os.path.expanduser('~'), 1)
+    listScans = list(map(lambda x: x[:x.rfind('.')], glob.glob('*.dat', root_dir=dirPath)))
+    return listScans
 
 if __name__ == '__main__':
     import platform,os
