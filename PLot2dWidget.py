@@ -8,8 +8,12 @@ from matplotlib.figure import Figure
 import numpy as np
 import numpy.typing as npt
 from DataClass import dataSpec, getScanNames
-from matplotlib.widgets import Cursor, RectangleSelector
+from matplotlib.widgets import Cursor, RectangleSelector,CheckButtons
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+
+
+
 class DataArray():
     def __init__(self, data: npt.NDArray,X=None,Y=None):
         self.Z=data
@@ -43,7 +47,7 @@ class MplCanvas(FigureCanvasQTAgg):
             self.axes.plot((self.data.Xminmax[0],self.data.Xminmax[1]),(0,0),color='cyan',linewidth=1.0),
             self.axes.plot((0,0),(self.data.Yminmax[0],self.data.Yminmax[1]),color='cyan',linewidth=1.0)]
         fig.colorbar(self.surf, ax=self.axes)
-        self.cursor = Cursor(self.axes, useblit=True, color='yellow', linewidth=2)
+        #self.cursor = Cursor(self.axes, useblit=True, color='yellow', linewidth=2)
         self.selector=RectangleSelector(self.axes, self.select_callback,
                 useblit=True,
                 button=[1, 3],  # disable middle button
@@ -54,13 +58,34 @@ class MplCanvas(FigureCanvasQTAgg):
         self.mpl_connect('key_press_event', self.toggle_selector)
         # X plot
         self.plot_x = self.axes_x.plot(self.data.Xslice[0],self.data.Xslice[1])
-        self.center.append(self.axes_x.plot([0, 0], [self.data.Xminmax[0], self.data.Xminmax[1]], color='cyan', linewidth=1.0))
         #  plot
         self.plot_y = self.axes_y.plot(self.data.Yslice[1], self.data.Yslice[0])
         self.axes_y.xaxis.set_inverted(True)
+        self.cursor = (Cursor(self.axes_x, useblit=True, color='yellow', linewidth=2),
+                       Cursor(self.axes_y, useblit=True, color='yellow', linewidth=2))
+        #interactive
+        self.axes_CheckBOX = fig.add_subplot(self.grid[0:3, 0:3])
+        self.logGraph = [False, False, False]
+
+        self.checkLog = CheckButtons(self.axes_CheckBOX, ["LogMap","LogX","LogY"], [False, False, False])
+        self.checkLog.on_clicked(self.logfunc)
 
 
 
+    def logfunc(self,label):
+        if label == "LogMap":
+            if self.logGraph[0]: self.surf.norm = colors.Normalize(vmin = self.data.Zminmax[0],vmax = self.data.Zminmax[1])
+            else: self.surf.norm = colors.SymLogNorm(linthresh= 0.003,vmin = self.data.Zminmax[0],vmax = self.data.Zminmax[1])
+            self.logGraph[0] = not self.logGraph[0]
+        if label == "LogX":
+            if self.logGraph[1]: self.axes_x.set_yscale('linear')
+            else: self.axes_x.set_yscale('log')
+            self.logGraph[1] = not self.logGraph[1]
+        if label == "LogY":
+            if self.logGraph[2]: self.axes_y.set_xscale('linear')
+            else: self.axes_y.set_xscale('log')
+            self.logGraph[2] = not self.logGraph[2]
+        self.draw()
 
     def select_callback(self, eclick, erelease):
         """
@@ -93,11 +118,6 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 
-
-
-
-
-
 class Plot2DWidget(QtWidgets.QWidget):
 
     def __init__(self, data):
@@ -112,8 +132,17 @@ class Plot2DWidget(QtWidgets.QWidget):
 
 if __name__== "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    ScanList = getScanNames('~/Documents/GinaSpectrum/')
-    ScanData = dataSpec('~/Documents/GinaSpectrum/', ScanList[0])
+    import platform, os
+    if platform.system() == 'Windows':
+            DirPath = os.getcwd() + "/data/"
+    else:
+            DirPath = '~/Documents/GinaSpectrum/'
+
+    ScanList = getScanNames(DirPath)
+    a = dataSpec(DirPath, ScanList[0])
+    a.update()
+    ScanList = getScanNames(DirPath)
+    ScanData = dataSpec(DirPath, "Spectrum_3266857")
     ARRAY=ScanData.ResultSpectra[0];
     w = Plot2DWidget(ARRAY)
     app.exec_()

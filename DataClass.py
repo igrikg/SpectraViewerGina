@@ -4,18 +4,22 @@ import pandas
 
 import numpy as np
 
+def getScanNames(dirPath) :
+    dirPath=dirPath.replace('~',os.path.expanduser('~'),1)
+    listScans=list(map(lambda x: os.path.split(x[:x.rfind('.')])[1],glob.glob(os.path.normpath(dirPath+'/*.dat'))))
+    return listScans
 
 class dataSpec:
     '''
         dirPath - path to spectrrum folder
         ScanName - file name for *.dat file scan
     '''
-
     def __init__(self, DirPath, ScanName):
-        self.DirPath = DirPath
-        self.ScanName = ScanName
-        self.DirPath = self.DirPath.replace('~', os.path.expanduser('~'), 1);
-        self.ResultSpectra = None
+        self.DirPath=DirPath
+        self.ScanName=ScanName
+        self.DirPath = self.DirPath.replace('~', os.path.expanduser('~'), 1)
+        self.DirPath = os.path.normpath(self.DirPath)
+        self.ResultSpectra=None
         self.loadScan()
         self.loadSpectrum()
 
@@ -23,19 +27,19 @@ class dataSpec:
 
     def loadScan(self):
         '''Load Scan table'''
-        self.ScanData = pandas.read_csv(self.DirPath + self.ScanName + '.dat', sep='\t')
+        self.ScanData = pandas.read_csv(self.DirPath +"\\"+ self.ScanName + '.dat', sep='\t')
 
 
 
     def loadSpectrum(self):
         '''Load Sspectrums'''
-        self.ScanData = pandas.read_csv(self.DirPath + self.ScanName + '.dat', sep='\t')
+        self.ScanData = pandas.read_csv(self.DirPath +"\\"+ self.ScanName + '.dat', sep='\t')
         self.ListSpectrum = glob.glob(self.ScanName + '_*.sub', root_dir=self.DirPath)
         self.ListSpectrum.sort(key=lambda elemStr: int(elemStr[elemStr.rfind('_') + 1:-4]))
-        i = 0;
+        i = 0
 
         for specFile in self.ListSpectrum:
-            array = np.loadtxt(self.DirPath + specFile).transpose()
+            array = np.loadtxt(self.DirPath+"\\"+ specFile).transpose()
             if (not i): self.ResultSpectra = np.zeros((self.ScanData.values.shape[0], array.shape[0], array.shape[1]))
             self.ResultSpectra[i] = array
             i += 1
@@ -58,7 +62,15 @@ class dataSpec:
                 if (not i): self.ResultSpectra = np.zeros(
                     (self.ScanData.values.shape[0], array.shape[0], array.shape[1]))
                 self.ResultSpectra[i] = array
-def getScanNames(dirPath):
-    dirPath = dirPath.replace('~', os.path.expanduser('~'), 1)
-    listScans = list(map(lambda x: x[:x.rfind('.')], glob.glob('*.dat', root_dir=dirPath)))
-    return listScans
+                i += 1
+
+if __name__ == '__main__':
+    import platform,os
+    if platform.system()== 'Windows':
+        DirPath = os.getcwd()+"/data/"
+    else:
+        DirPath = '~/Documents/GinaSpectrum/'
+
+    ScanList = getScanNames(DirPath)
+    a = dataSpec(DirPath, ScanList[0])
+    a.update()
