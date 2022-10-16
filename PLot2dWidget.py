@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 import numpy as np
 import numpy.typing as npt
 from DataClass import dataSpec, getScanNames
-from matplotlib.widgets import Cursor, RectangleSelector,CheckButtons
+from matplotlib.widgets import Cursor, RectangleSelector,CheckButtons,RadioButtons
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
@@ -35,13 +35,13 @@ class MplCanvas(FigureCanvasQTAgg):
         fig = Figure()
         self.data=DataArray(data)
         super(MplCanvas,self).__init__(fig)
-        self.grid = plt.GridSpec(17, 17, hspace=1, wspace=1)
+        self.grid = plt.GridSpec(17, 17, hspace=0.2, wspace=1)
         #self.axes = fig.add_subplot()
         self.axes = fig.add_subplot(self.grid[5:, 5:])
         self.axes_x = fig.add_subplot(self.grid[0:4, 5:15])
         self.axes_y = fig.add_subplot(self.grid[5:, 0:3])
         #Map
-        self.surf = self.axes.pcolormesh(self.data.X, self.data.Y, self.data.Z, cmap=cm.jet,
+        self.surf = self.axes.pcolormesh(self.data.X, self.data.Y, self.data.Z, cmap=cm.rainbow,
                               linewidth=5, antialiased=False)
         self.center = [
             self.axes.plot((self.data.Xminmax[0],self.data.Xminmax[1]),(0,0),color='cyan',linewidth=1.0),
@@ -69,6 +69,19 @@ class MplCanvas(FigureCanvasQTAgg):
 
         self.checkLog = CheckButtons(self.axes_CheckBOX, ["LogMap","LogX","LogY"], [False, False, False])
         self.checkLog.on_clicked(self.logfunc)
+
+        self.axes_RadioButt = fig.add_subplot(self.grid[3:5,0:3])
+        self.RadioButt = RadioButtons(self.axes_RadioButt, ('Normal', 'Binary'))
+        self.RadioButt.on_clicked(self.binaryMode)
+
+    def binaryMode(self,label):
+            if label == 'Binary':
+                self.surf = self.axes.pcolormesh(self.data.X, self.data.Y, (self.data.Z>0).astype(int), cmap=cm.gray,
+                                             linewidth=5, antialiased=False)
+            else:
+                self.surf = self.axes.pcolormesh(self.data.X, self.data.Y, self.data.Z, cmap=cm.rainbow,
+                                                 linewidth=5, antialiased=False)
+            self.draw()
 
 
 
@@ -143,6 +156,6 @@ if __name__== "__main__":
     a.update()
     ScanList = getScanNames(DirPath)
     ScanData = dataSpec(DirPath, "Spectrum_3266857")
-    ARRAY=ScanData.ResultSpectra[0];
+    ARRAY=ScanData.ResultSpectra[0]
     w = Plot2DWidget(ARRAY)
     app.exec_()

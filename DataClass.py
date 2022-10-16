@@ -1,7 +1,5 @@
-import glob
-import os
 import pandas
-
+import glob,os
 import numpy as np
 
 
