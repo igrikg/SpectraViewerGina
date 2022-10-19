@@ -36,8 +36,9 @@ class dataSpec:
         for specFile in self.ListSpectrum:
             array = np.loadtxt(self.DirPath+"\\"+ specFile).transpose()
             if (not i): self.ResultSpectra = np.zeros((self.ScanData.values.shape[0], array.shape[0], array.shape[1]))
-            self.ResultSpectra[i] = array
-            i += 1
+            if self.ResultSpectra[0].shape == array.shape:
+                self.ResultSpectra[i] = array
+                i += 1
 
 
 
