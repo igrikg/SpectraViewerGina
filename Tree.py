@@ -16,9 +16,12 @@ class StandardItem(QStandardItem):
             image = QImage(image_path)
             image.size()
             self.setData(image, Qt.DecorationRole)
+
+
 class view(QWidget):
-    def __init__(self, dirPath):
+    def __init__(self, dirPath,parent=None):
         super(view, self).__init__()
+        self.parent=parent
         self.dirPath=dirPath
         self.data = []
         self.tree = QTreeView(self)
@@ -39,16 +42,24 @@ class view(QWidget):
         self.tree.expandAll()
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.openMenu)
-
-        self.reload = QAction(self)
-        self.reload.setText("ReLoad")
-        self.doubleClickAction =QAction(self)
-
-        #self.tree.doubleClicked.connect(self.doubleClickAction)
+        self.tree.doubleClicked.connect(self.doubleClickAction)
     def Update (self):
         pass
     def AddMultiToShowAction(self,listItems):
         pass
+    def doubleClickAction(self, index):
+        items = self.tree.selectedIndexes()
+        dataList = []
+
+        for i in range(0,len(items),2):
+            dataDict = {}
+            dataDict['Name']=self.model.data(items[i])
+            dataDict['Date']=self.model.data(items[i+1])
+            dataDict['Path'] =self.model.data(items[i].siblingAtColumn(2))
+            dataList.append(dataDict)
+        if  not self.parent is None:
+            self.parent.doubleClickAction(dataList)
+
 
     def openMenu(self, position):
             indexes = self.sender().selectedIndexes()
@@ -81,10 +92,8 @@ class view(QWidget):
 
     def importData(self):
         self.model.setRowCount(0)
-        parent = self.model.invisibleRootItem()
         seen = {}
         seen[0]=self.model.invisibleRootItem()
-
         values = deque(self.data)
         while values:
             value = values.popleft()
@@ -188,17 +197,16 @@ sys.excepthook = excepthook
 
 
 if __name__ == '__main__':
-    if __name__ == '__main__':
         import platform, os
 
         if platform.system() == 'Windows':
             path_to_file = os.getcwd() + "/data/"
         else:
             path_to_file = '~/Documents/GinaSpectrum/'
-    path_to_file = path_to_file.replace('~', os.path.expanduser('~'), 1)
-    app = QApplication(sys.argv)
-    view = view(path_to_file)
+        path_to_file = path_to_file.replace('~', os.path.expanduser('~'), 1)
+        app = QApplication(sys.argv)
+        view = view(path_to_file)
 
-    view.setWindowTitle('QTreeview Example')
-    view.show()
-    sys.exit(app.exec_())
+        view.setWindowTitle('QTreeview Example')
+        view.show()
+        sys.exit(app.exec_())
