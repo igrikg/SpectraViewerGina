@@ -33,6 +33,8 @@ class MplCanvas(FigureCanvasQTAgg):
 
     def __init__(self, data, parent=None):
         fig = Figure()
+        if data==None:
+            data = np.zeros((145,145))
         self.data=DataArray(data)
         super(MplCanvas,self).__init__(fig)
         self.grid = plt.GridSpec(17, 17, hspace=0.2, wspace=1)
@@ -73,7 +75,11 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes_RadioButt = fig.add_subplot(self.grid[3:5,0:3])
         self.RadioButt = RadioButtons(self.axes_RadioButt, ('Normal', 'Binary'))
         self.RadioButt.on_clicked(self.binaryMode)
-
+    def ShowData(self,data):
+        self.data = DataArray(data)
+        self.surf = self.axes.pcolormesh(self.data.X, self.data.Y, self.data.Z, cmap=cm.rainbow,
+                                         linewidth=5, antialiased=False)
+        self.draw()
     def binaryMode(self,label):
             if label == 'Binary':
                 self.surf = self.axes.pcolormesh(self.data.X, self.data.Y, (self.data.Z>0).astype(int), cmap=cm.gray,
@@ -121,19 +127,9 @@ class MplCanvas(FigureCanvasQTAgg):
                 self.selector.set_active(False)
             else:
                 self.selector.set_active(True)
-
-
-
-
-
-
-
-
-
-
 class Plot2DWidget(QtWidgets.QWidget):
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         super(Plot2DWidget, self).__init__()
         self.canvas = MplCanvas(data,self)
         self.toolbar = NavigationToolbar(self.canvas, self)
@@ -141,7 +137,10 @@ class Plot2DWidget(QtWidgets.QWidget):
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
-        self.show()
+
+    def ShowData(self, data):
+        self.canvas.ShowData(data)
+
 
 if __name__== "__main__":
     app = QtWidgets.QApplication(sys.argv)
@@ -158,4 +157,5 @@ if __name__== "__main__":
     ScanData = dataSpec(DirPath, "Spectrum_3266857")
     ARRAY=ScanData.ResultSpectra[0]
     w = Plot2DWidget(ARRAY)
+    w.show()
     app.exec_()
