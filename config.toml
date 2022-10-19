@@ -1,0 +1,4 @@
+[Path]
+FolderSpectra = "C:\\Users\\igrik\\PycharmProjects\\SpectraViewerGina\\data\\"
+[SumRange]
+SpectraSignal = [ -10, 10, -20, 20] # X1,x2,y1,y2

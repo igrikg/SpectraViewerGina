@@ -1,56 +1,53 @@
+import os.path
+
 import numpy as np
+import toml
 from DataClass import dataSpec
-from DataClass import getScanNames
+from Tree import view
+from TreeShowSpectrum import ShowTreeView
+from PLot2dWidget import Plot2DWidget
+from Plot import PlotResult
+import sys
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
-from matplotlib.widgets import MultiCursor
-import matplotlib.pyplot as plt
-from matplotlib.backend_tools import Cursors
 
 
-# Press the green button in the gutter to run the script.
+class MainWindow(QWidget):
+
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+        with open('config.toml', 'r') as f:
+            self.configDict = toml.load(f)
+        self.TreeWidget = view(self.configDict["Path"]["FolderSpectra"],self)
+        self.ShowTreeWidget = ShowTreeView()
+        self.PlotMapWidget = Plot2DWidget()
+        self.PlotResultWidget = PlotResult()
+        mailVLayout = QVBoxLayout(self)
+        firstHLayout = QHBoxLayout(self)
+        firstHLayout.addWidget(self.TreeWidget)
+        firstHLayout.addWidget(self.ShowTreeWidget)
+        firstHLayout.addWidget(self.PlotMapWidget)
+        mailVLayout.addLayout(firstHLayout)
+        self.setWindowTitle("Hello World")
+        self.setLayout(mailVLayout)
+        mailVLayout.addWidget(self.PlotResultWidget)
+        #self.setCentralWidget(mailVLayout)
+        self.show()
+    def doubleClickAction(self, dataList):
+        self.ShowTreeWidget.importData(dataList)
+        self.listDataClass=[]
+        for line in dataList:
+            self.listDataClass.append(dataSpec(os.path.dirname(line['Path']),line['Name'] ))
+        self.PlotMapWidget.ShowData(self.listDataClass[0].ResultSpectra[0])
+
+
+
+
 if __name__ == '__main__':
-    import platform,os
 
-    if platform.system()== 'Windows':
-        DirPath = os.getcwd()+"/data/"
-    else:
-        DirPath = '~/Documents/GinaSpectrum/'
-
-    ScanList = getScanNames(DirPath)
-    a = dataSpec(DirPath, ScanList[0])
-    a.update()
-
-#    ScanList=getScanNames('~/Documents/GinaSpectrum/')
-#    ScanData,resultSpectra=getSpectras('~/Documents/GinaSpectrum/',ScanList[0])
-#    dataset=pandas.read_csv('~/Documents/GinaSpectrum/Spectrum_86352.dat',sep='\t')
-#    dataset2 = np.loadtxt('/home/nsluser/Documents/GinaSpectrum/Spectrum_86352_0.sub')
-#    plt.imshow(np.log10(resultSpectra[30]))
-#   plt.show()
-
-
-
-
-
-fig, axs = plt.subplots(len(Cursors), figsize=(6, len(Cursors) + 0.5),
-                        gridspec_kw={'hspace': 0})
-fig.suptitle('Hover over an Axes to see alternate Cursors')
-
-for cursor, ax in zip(Cursors, axs):
-    ax.cursor_to_use = cursor
-    ax.text(0.5, 0.5, cursor.name,
-            horizontalalignment='center', verticalalignment='center')
-    ax.set(xticks=[], yticks=[])
-
-
-def hover(event):
-    if fig.canvas.widgetlock.locked():
-        # Don't do anything if the zoom/pan tools have been enabled.
-        return
-
-    fig.canvas.set_cursor(
-        event.inaxes.cursor_to_use if event.inaxes else Cursors.POINTER)
-
-
-fig.canvas.mpl_connect('motion_notify_event', hover)
-
-plt.show()
+    app = QtWidgets.QApplication(sys.argv)
+    w = MainWindow()
+    app.exec_()
