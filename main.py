@@ -21,27 +21,41 @@ class MainWindow(QWidget):
         super(MainWindow, self).__init__(*args, **kwargs)
         with open('config.toml', 'r') as f:
             self.configDict = toml.load(f)
-        self.TreeWidget = view(self.configDict["Path"]["FolderSpectra"],self)
+        self.TreeWidget = view(self.configDict["Path"]["FolderSpectra"], self)
         self.ShowTreeWidget = ShowTreeView()
         self.PlotMapWidget = Plot2DWidget()
+
+        self.PlotMapWidget.canvas.setRectangeSelector(list(map(lambda x: float(x), self.configDict["SumRange"]["SpectraSignal"])))
+        self.PlotMapWidget.canvas.XrecalcValue = self.configDict["Detector"]["XtoDeg"]
+        self.PlotMapWidget.canvas.YrecalcValue = self.configDict["Detector"]["YtoDeg"]
         self.PlotResultWidget = PlotResult()
         mailVLayout = QVBoxLayout(self)
         firstHLayout = QHBoxLayout(self)
+
         firstHLayout.addWidget(self.TreeWidget)
-        firstHLayout.addWidget(self.ShowTreeWidget)
+
         firstHLayout.addWidget(self.PlotMapWidget)
         mailVLayout.addLayout(firstHLayout)
         self.setWindowTitle("Hello World")
         self.setLayout(mailVLayout)
         mailVLayout.addWidget(self.PlotResultWidget)
-        #self.setCentralWidget(mailVLayout)
+        mailVLayout.addWidget(self.ShowTreeWidget)
         self.show()
+
+    def closeEvent(self, event):
+
+        if not self.PlotMapWidget.canvas.RectangleSelectorCordinats is [0, 0, 0, 0]:
+            self.configDict["SumRange"]["SpectraSignal"] = self.PlotMapWidget.canvas.RectangleSelectorCordinats
+        with open('config.toml', 'w') as f:
+            toml.dump(self.configDict, f)
+        event.accept()
+
     def doubleClickAction(self, dataList):
         self.ShowTreeWidget.importData(dataList)
         self.listDataClass=[]
         for line in dataList:
-            self.listDataClass.append(dataSpec(os.path.dirname(line['Path']),line['Name'] ))
-        self.PlotMapWidget.ShowData(self.listDataClass[0].ResultSpectra[0])
+            self.listDataClass.append(dataSpec(os.path.dirname(line['Path']), line['Name']))
+        self.PlotMapWidget.ShowDataSpectrums(self.listDataClass[0])
 
 
 

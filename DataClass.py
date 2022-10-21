@@ -31,6 +31,7 @@ class dataSpec:
         self.ScanData = pandas.read_csv(self.DirPath +"\\"+ self.ScanName + '.dat', sep='\t')
         self.ListSpectrum = list(map(lambda x: os.path.basename(x), glob.glob(self.DirPath+"\\"+self.ScanName + '_*.sub')))
         self.ListSpectrum.sort(key=lambda elemStr: int(elemStr[elemStr.rfind('_') + 1:-4]))
+
         i = 0
 
         for specFile in self.ListSpectrum:
@@ -39,7 +40,6 @@ class dataSpec:
             if self.ResultSpectra[0].shape == array.shape:
                 self.ResultSpectra[i] = array
                 i += 1
-
 
 
     def update(self):
@@ -59,6 +59,20 @@ class dataSpec:
                     (self.ScanData.values.shape[0], array.shape[0], array.shape[1]))
                 self.ResultSpectra[i] = array
                 i += 1
+
+    def getListOfScanColums(self):
+        l=[self.ScanData.columns[0],self.ScanData.columns[-1]]
+        if l[0]==l[1]:
+            return [l[0]]
+        else:
+            return l
+
+    def getListOfFirstColums(self):
+        return self.ScanData.loc[:,self.ScanData.columns[0]].to_list()
+
+
+
+
 def getScanNames(dirPath):
     dirPath = dirPath.replace('~', os.path.expanduser('~'), 1)
     listScans = list(map(lambda x: os.path.basename(x[:x.rfind('.')]), glob.glob(os.path.normpath(dirPath+'/*.dat'))))
