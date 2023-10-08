@@ -2,7 +2,7 @@
 FolderSpectra = "C:\\Users\\igrik\\PycharmProjects\\SpectraViewerGina\\data\\"
 
 [SumRange]
-SpectraSignal = [ -2.47, 13.44, -43.1, 32.59,]
+SpectraSignal = [ "-14.36", "-7.53", "-53.34", "20.67",]
 
 [Detector]
 XtoDeg = 0.5

@@ -1,52 +1,19 @@
 import sys
 import matplotlib
-from copy import copy
+
 matplotlib.use('Qt5Agg')
 from matplotlib import cm
 from PyQt5 import QtCore, QtGui, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import numpy as np
-import numpy.typing as npt
-from DataClass import dataSpec, getScanNames
+
+from DataClass import dataSpec, getScanNames, DataArray
 from matplotlib.widgets import Cursor, RectangleSelector,CheckButtons
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
 
-
-
-class DataArray():
-    def __init__(self, data: npt.NDArray,X=None,Y=None):
-        self.Z=data
-        if X is None: X = np.arange(-self.Z.shape[0]/2, self.Z.shape[0]/2, 1)
-        if Y is None: Y = np.arange(-self.Z.shape[1]/2, self.Z.shape[1]/2, 1)
-        self.X, self.Y = np.meshgrid(X, Y)
-        self.X_old = copy(self.X)
-        self.Y_old = copy(self.Y)
-        self.shape = data.shape
-        self.Xminmax = (self.X.min(), self.X.max())
-        self.Yminmax = (self.Y.min(), self.Y.max())
-        self.Zminmax = (self.Z.min(), self.Z.max())
-        self.Xslice=(X,np.sum(self.Z,0))
-        self.Yslice=(Y,np.sum(self.Z,1))
-
-    def recalculationXY(self,XrecValue=None,YrecValue=None):
-        if XrecValue==None:
-            self.X = copy(self.X_old)
-        else:
-            self.X_old = copy(self.X)
-            self.X = self.X*XrecValue
-        if YrecValue==None:
-            self.Y = copy(self.Y_old)
-        else:
-            self.Y_old = copy(self.Y)
-            self.Y = self.Y * YrecValue
-        self.Xminmax = (self.X.min(), self.X.max())
-        self.Yminmax = (self.Y.min(), self.Y.max())
-        self.Zminmax = (self.Z.min(), self.Z.max())
-        self.Xslice = (self.X[0], np.sum(self.Z, 0))
-        self.Yslice = (self.Y.transpose()[0], np.sum(self.Z, 1))
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, data=None, parent=None):
@@ -111,6 +78,7 @@ class MplCanvas(FigureCanvasQTAgg):
 
         if self.parent.toolbar.XrecToDegCheckBox.isChecked():
             XrecValue = self.XrecalcValue
+            # copy to saving x
             self.__RectangleSelectorCordinats[0] = self.RectangleSelectorCordinats[0]
             self.__RectangleSelectorCordinats[1] = self.RectangleSelectorCordinats[1]
             self.RectangleSelectorCordinats[0] = self.RectangleSelectorCordinats[0] * XrecValue
@@ -118,20 +86,34 @@ class MplCanvas(FigureCanvasQTAgg):
         else:
             XrecValue = None
             if self.sender() == self.parent.toolbar.XrecToDegCheckBox:
-                self.RectangleSelectorCordinats[0] = self.__RectangleSelectorCordinats[0]
-                self.RectangleSelectorCordinats[1] = self.__RectangleSelectorCordinats[1]
+                if self.RectangleSelectorCordinats[0] == self.__RectangleSelectorCordinats[0] * self.XrecalcValue:
+                    self.RectangleSelectorCordinats[0] = self.__RectangleSelectorCordinats[0]
+                else:
+                    self.RectangleSelectorCordinats[0] = self.RectangleSelectorCordinats[0] / self.XrecalcValue
 
+                if self.RectangleSelectorCordinats[1] == self.__RectangleSelectorCordinats[1] * self.XrecalcValue:
+                    self.RectangleSelectorCordinats[1] = self.__RectangleSelectorCordinats[1]
+                else:
+                    self.RectangleSelectorCordinats[1] = self.RectangleSelectorCordinats[1] / self.XrecalcValue
 
         if self.parent.toolbar.YrecToDegCheckBox.isChecked():
             YrecValue = self.YrecalcValue
+            # copy to saving y
             self.__RectangleSelectorCordinats[2] = self.RectangleSelectorCordinats[2]
             self.__RectangleSelectorCordinats[3] = self.RectangleSelectorCordinats[3]
             self.RectangleSelectorCordinats[2] = self.RectangleSelectorCordinats[2] * YrecValue
             self.RectangleSelectorCordinats[3] = self.RectangleSelectorCordinats[3] * YrecValue
         else:
             if self.sender() == self.parent.toolbar.YrecToDegCheckBox:
-                self.RectangleSelectorCordinats[2] = self.__RectangleSelectorCordinats[2]
-                self.RectangleSelectorCordinats[3] = self.__RectangleSelectorCordinats[3]
+                if self.RectangleSelectorCordinats[2] == self.__RectangleSelectorCordinats[2]*self.YrecalcValue:
+                    self.RectangleSelectorCordinats[2] = self.__RectangleSelectorCordinats[2]
+                else:
+                    self.RectangleSelectorCordinats[2] = self.RectangleSelectorCordinats[2]/self.YrecalcValue
+                if self.RectangleSelectorCordinats[3] == self.__RectangleSelectorCordinats[3]*self.YrecalcValue:
+                    self.RectangleSelectorCordinats[3] = self.__RectangleSelectorCordinats[3]
+                else:
+                    self.RectangleSelectorCordinats[3] = self.RectangleSelectorCordinats[3]/self.YrecalcValue
+
             YrecValue = None
         self.data.recalculationXY(XrecValue,YrecValue)
         self.setRectangeSelector(self.RectangleSelectorCordinats)
@@ -193,6 +175,14 @@ class MplCanvas(FigureCanvasQTAgg):
         self.colorbar.update_normal(self.surf)
         self.drawRectangleSelector()
         self.draw()
+    def getRangeSum(self):
+        Xindex = np.argwhere(np.logical_and(self.data.X[0] >= self.RectangleSelectorCordinats[0],
+                                            self.data.X[0] <= self.RectangleSelectorCordinats[1]))
+        Yindex = np.argwhere(np.logical_and(np.transpose(self.data.Y)[0] >= self.RectangleSelectorCordinats[2],
+                                            np.transpose(self.data.Y)[0] <= self.RectangleSelectorCordinats[3]))
+
+        return [Xindex[0][0],Xindex[-1][0], Yindex[0][0],Yindex[-1][0]]
+
 
     def binaryMode(self):
             if self.sender().isChecked():
@@ -341,7 +331,7 @@ class Plot2DWidget(QtWidgets.QWidget):
         self.toolbarScanSpectra.SliderSpectra.setValue(0)
         self.toolbarScanSpectra.NumberSpectra.setValue(0)
 
-    def showNextSpectrum(self,Number):
+    def showNextSpectrum(self, Number):
         self.ShowSingleData(self.data.ResultSpectra[Number])
         self.toolbarScanSpectra.ValueOffSpectra.setText(str(self.dataListScan[Number]))
 
@@ -354,6 +344,7 @@ class Plot2DWidget(QtWidgets.QWidget):
         value = self.toolbarScanSpectra.SliderSpectra.value()+1
         if value<=self.toolbarScanSpectra.SliderSpectra.maximum():
             self.toolbarScanSpectra.SliderSpectra.setValue(value)
+
     def shangeNumber(self):
         self.toolbarScanSpectra.SliderSpectra.setValue(self.toolbarScanSpectra.NumberSpectra.value())
 

@@ -1,6 +1,4 @@
 import os.path
-
-import numpy as np
 import toml
 from DataClass import dataSpec
 from Tree import view
@@ -24,28 +22,35 @@ class MainWindow(QWidget):
         self.TreeWidget = view(self.configDict["Path"]["FolderSpectra"], self)
         self.ShowTreeWidget = ShowTreeView()
         self.PlotMapWidget = Plot2DWidget()
-
         self.PlotMapWidget.canvas.setRectangeSelector(list(map(lambda x: float(x), self.configDict["SumRange"]["SpectraSignal"])))
         self.PlotMapWidget.canvas.XrecalcValue = self.configDict["Detector"]["XtoDeg"]
         self.PlotMapWidget.canvas.YrecalcValue = self.configDict["Detector"]["YtoDeg"]
         self.PlotResultWidget = PlotResult()
-        mailVLayout = QVBoxLayout(self)
-        firstHLayout = QHBoxLayout(self)
+        grid = QGridLayout()
+        self.setLayout(grid)
+        self.TreeWidget.setMaximumWidth(400)
+        self.ShowTreeWidget.setMaximumWidth(400)
+        grid.addWidget(self.TreeWidget,0,0,1,1)
+        grid.addWidget(self.ShowTreeWidget,1,0,1,1)
+        grid.addWidget(self.PlotMapWidget,0,1,1,5)
+        grid.addWidget(self.PlotResultWidget,1,1,1,5)
 
-        firstHLayout.addWidget(self.TreeWidget)
 
-        firstHLayout.addWidget(self.PlotMapWidget)
-        mailVLayout.addLayout(firstHLayout)
-        self.setWindowTitle("Hello World")
-        self.setLayout(mailVLayout)
-        mailVLayout.addWidget(self.PlotResultWidget)
-        mailVLayout.addWidget(self.ShowTreeWidget)
+        self.setWindowTitle("Gina Spectrum")
+
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.updateTimer)
+        self.startTimer()
         self.show()
 
     def closeEvent(self, event):
-
         if not self.PlotMapWidget.canvas.RectangleSelectorCordinats is [0, 0, 0, 0]:
-            self.configDict["SumRange"]["SpectraSignal"] = self.PlotMapWidget.canvas.RectangleSelectorCordinats
+            self.PlotMapWidget.toolbar.XrecToDegCheckBox.setCheckState(False)
+            self.PlotMapWidget.toolbar.YrecToDegCheckBox.setCheckState(False)
+            self.configDict["SumRange"]["SpectraSignal"] = \
+                list(map(lambda x: str(x), self.PlotMapWidget.canvas.RectangleSelectorCordinats))
+
         with open('config.toml', 'w') as f:
             toml.dump(self.configDict, f)
         event.accept()
@@ -56,8 +61,20 @@ class MainWindow(QWidget):
         for line in dataList:
             self.listDataClass.append(dataSpec(os.path.dirname(line['Path']), line['Name']))
         self.PlotMapWidget.ShowDataSpectrums(self.listDataClass[0])
+        self.PlotResultWidget.clear()
+        for Spectra in self.listDataClass:
+            plots1d=Spectra.getSumPlot(self.PlotMapWidget.canvas.getRangeSum())
+
+            self.PlotResultWidget.showPlots(plots1d,Spectra.ScanName)
 
 
+    def updateTimer(self):
+        self.TreeWidget.Update()
+
+    def startTimer(self):
+        self.timer.start(1000)
+    def endTimer(self):
+        self.timer.stop()
 
 
 if __name__ == '__main__':

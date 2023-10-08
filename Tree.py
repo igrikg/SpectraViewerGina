@@ -43,8 +43,17 @@ class view(QWidget):
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.openMenu)
         self.tree.doubleClicked.connect(self.doubleClickAction)
+
+
+
     def Update (self):
-        pass
+        #нові скани
+        NumberOfData = len(self.data)
+        self.__getScanNames()
+        if NumberOfData >= len(self.data):
+            print("new file")
+
+
     def AddMultiToShowAction(self,listItems):
         pass
     def doubleClickAction(self, index):

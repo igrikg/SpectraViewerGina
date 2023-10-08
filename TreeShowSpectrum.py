@@ -22,8 +22,7 @@ class ShowTreeView(QWidget):
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.expandAll()
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self.openMenu)
-        #self.doubleClickAction =QAction(self)
+        #self.tree.customContextMenuRequested.connect(self.openMenu)
 
     def Update (self):
         pass
@@ -64,6 +63,7 @@ class ShowTreeView(QWidget):
             SI3 = QStandardItem(value['Path'])
             SI3.setEditable(False)
             parent.appendRow([SI1,SI3])
+
     def addDataWithUpdate(self, dataList):
         self.data.extend(dataList)
 
