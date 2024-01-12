@@ -65,7 +65,9 @@ class MainWindow(QWidget):
             toml.dump(self.configDict, f)
         event.accept()
 
-    def doubleClickAction(self, data_list):
+    def show_new_spectrum(self, data_list):
+        if not data_list:
+            return
         self.ShowTreeWidget.import_data(data_list)
         self.shows_data_classes = []
         for line in data_list:
@@ -85,6 +87,14 @@ class MainWindow(QWidget):
     def end_timer(self):
         self.timer.stop()
 
+import sys
+import traceback
+
+def excepthook(exc_type, exc_value, exc_tb):
+    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    print("Oбнаружена ошибка !:", tb)
+#    QtWidgets.QApplication.quit()             # !!! если вы хотите, чтобы событие завершилось
+sys.excepthook = excepthook
 
 if __name__ == '__main__':
 

@@ -26,14 +26,14 @@ class StandardItem(QStandardItem):
 class TreeOfDataFolder(QWidget):
     """
         Working folder Tree class
-        :param dirPath: folder path
+        :param dir_path: folder path
         :param parent: class of main widget class
         """
-    def __init__(self, dirPath, parent=None):
+    def __init__(self, dir_path, parent=None):
         super(TreeOfDataFolder, self).__init__()
         super().__init__(parent)
         self.parent=parent
-        self.dirPath=dirPath
+        self.dir_path=dir_path
         self.data = []
         self.tree = QTreeView(self)
         self.label = QLabel(self)
@@ -46,10 +46,9 @@ class TreeOfDataFolder(QWidget):
         self.tree.setModel(self.model)
         self.tree.setColumnHidden(2,True)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.label.setText(self.dir_path)
+        self.update_data()
 
-        self.label.setText(self.dirPath)
-        self.data = self.__get_scan_names()
-        self.import_data()
         self.tree.expandAll()
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.openMenu)
@@ -63,40 +62,44 @@ class TreeOfDataFolder(QWidget):
             self.import_data()
 
     def AddMultiToShowAction(self,listItems):
-        pass
+        items = self.tree.selectedIndexes()
+        items = self.__clear_folder_from_indexes(items)
+        self.__show_spectrum(items)
+
 
     def doubleClickAction(self, index):
         items = self.tree.selectedIndexes()
-        data_list = []
+        items = self.__clear_folder_from_indexes(items)
+        self.__show_spectrum(items)
 
-        for i in range(0,len(items),2):
-            data_dict = {}
-            data_dict['Name']=self.model.data(items[i])
-            data_dict['Date']=self.model.data(items[i+1])
-            data_dict['Path'] =self.model.data(items[i].siblingAtColumn(2))
-            data_list.append(data_dict)
-        if  not self.parent is None:
-            self.parent.doubleClickAction(data_list)
+    def __show_spectrum(self, selected_indexes_list):
+        result = []
+        if self.parent is None:
+            return
 
+        for i in range(0, len(selected_indexes_list), 2):
+            result.append({'Name': self.model.data(selected_indexes_list[i]),
+                           'Date': self.model.data(selected_indexes_list[i + 1]),
+                           'Path': self.model.data(selected_indexes_list[i].siblingAtColumn(2))
+                           })
+        self.parent.show_new_spectrum(result)
+
+    def __clear_folder_from_indexes(self, indexes: list):
+        return [index for index in indexes if os.path.isfile(self.model.data(index.siblingAtColumn(2)))]
 
     def openMenu(self, position):
             indexes = self.sender().selectedIndexes()
-            mdlIdx = self.tree.indexAt(position)
+            indexes = self.__clear_folder_from_indexes(indexes)
+            mdl_idx = self.tree.indexAt(position)
 
-            if not mdlIdx.isValid():
+            if not mdl_idx.isValid():
                 return
-            item = self.model.itemFromIndex(mdlIdx)
 
-            if len(indexes) > 0:
-                level = 0
-                index = indexes[0]
-                while index.parent().isValid():
-                    index = index.parent()
-                    level += 1
+            if not indexes:
+                return
 
-            else:
-                level = 0
             self.__right_click_menu = QMenu()
+
             if len(indexes) > 2:
                 self.__AddMulti = self.__right_click_menu.addAction("AddMultiToShowAction")
                 self.__AddMulti.triggered.connect(partial(self.AddMultiToShowAction,indexes))
@@ -129,76 +132,61 @@ class TreeOfDataFolder(QWidget):
 
             parent.appendRow([seen_item_1, seen_item_2, seen_item_3])
             seen[unique_id] = parent.child(parent.rowCount() - 1)
-    """Not working with folder parrents"""
 
     def __get_scan_names(self):
         result = []
-        dirPath=self.dirPath
-        dirPath = dirPath.replace('~', os.path.expanduser('~'), 1)
-        dirPath = os.path.normpath(dirPath).replace('\\','/')
-        if dirPath[-1] != '/': dirPath = dirPath+'/'
+        dir_path = self.dir_path
+        dir_path = dir_path.replace('~', os.path.expanduser('~'), 1)
+        dir_path = os.path.normpath(dir_path).replace('\\','/')
+        if dir_path[-1] != '/': dir_path = dir_path+'/'
         unique_id = 1
-        DictTempFolder = {}
-        for filne in glob.iglob(dirPath + '/**/*.dat', recursive=True):
-            filne = os.path.normpath(filne).replace('\\', '/')
-            name_without_path = filne[len(dirPath):]
+        dict_temp_folder = {}
+        for file_path in glob.iglob(dir_path + '/**/*.dat', recursive=True):
+            file_path = os.path.normpath(file_path).replace('\\', '/')
+            name_without_path = file_path[len(dir_path):]
             list_of_including = name_without_path.split('/')
             folder_in_list = 0
             for call in list_of_including:
-                addDict = {'unique_id': 1, 'parent_id': 0, 'Name': '', 'Date': '', 'type': 'Folder', 'Path': ''}
+                add_dict = {'unique_id': 1, 'parent_id': 0, 'Name': '', 'Date': '', 'type': 'Folder', 'Path': ''}
                 if call.rfind('.dat') != -1:  # file
-                    addDict['type'] = 'file'
-                    addDict['Name'] = call.split('.dat')[0]
-                    addDict['Path'] = dirPath[:-1] + ''.join(['/' + x for x in list_of_including])
+                    add_dict['type'] = 'file'
+                    add_dict['Name'] = call.split('.dat')[0]
+                    add_dict['Path'] = dir_path[:-1] + ''.join(['/' + x for x in list_of_including])
                 else:  # folder
                     folder_in_list = folder_in_list + 1
-                    addDict['Path'] = dirPath[:-1] + ''.join(['/' + x for x in list_of_including[:folder_in_list]]) + '/'
-                    addDict['type'] = 'folder'
-                    addDict['Name'] = call
+                    add_dict['Path'] = dir_path[:-1] + ''.join(['/' + x for x in list_of_including[:folder_in_list]]) + '/'
+                    add_dict['type'] = 'folder'
+                    add_dict['Name'] = call
                 # unique folder check
-                path_to_folder_of_this_solutions=dirPath[:-1] + ''.join(['/' + x for x in list_of_including[:-1]])+'/'
+                path_to_folder_of_this_solutions=dir_path[:-1] + ''.join(['/' + x for x in list_of_including[:-1]])+'/'
 
-                if dirPath == path_to_folder_of_this_solutions:
-                    addDict['parent_id'] = 0
+                if dir_path == path_to_folder_of_this_solutions:
+                    add_dict['parent_id'] = 0
                     # root
-                    if addDict['type'] == 'folder' and addDict['Path'] not in DictTempFolder.keys():
-                        DictTempFolder[addDict['Path']] = unique_id
-                    elif addDict['type'] == 'folder':
+                    if add_dict['type'] == 'folder' and add_dict['Path'] not in dict_temp_folder.keys():
+                        dict_temp_folder[add_dict['Path']] = unique_id
+                    elif add_dict['type'] == 'folder':
                         continue
                 else:
                     #somsing wrong here
-                    if addDict['type'] == 'file':
-                        if os.path.dirname(addDict['Path'][:-1]) + '/' in DictTempFolder.keys():
-                            addDict['parent_id'] = DictTempFolder[os.path.dirname(addDict['Path'][:-1]) + '/']
-                    if addDict['type'] == 'folder':
-                        if os.path.dirname(addDict['Path'][:-1])+'/' in DictTempFolder.keys():
-                            addDict['parent_id'] = DictTempFolder[os.path.dirname(addDict['Path'][:-1])+'/']
-                        if addDict['Path'] not in DictTempFolder.keys():
-                            DictTempFolder[addDict['Path']] = unique_id
+                    if add_dict['type'] == 'file':
+                        if os.path.dirname(add_dict['Path'][:-1]) + '/' in dict_temp_folder.keys():
+                            add_dict['parent_id'] = dict_temp_folder[os.path.dirname(add_dict['Path'][:-1]) + '/']
+                    if add_dict['type'] == 'folder':
+                        if os.path.dirname(add_dict['Path'][:-1])+'/' in dict_temp_folder.keys():
+                            add_dict['parent_id'] = dict_temp_folder[os.path.dirname(add_dict['Path'][:-1])+'/']
+                        if add_dict['Path'] not in dict_temp_folder.keys():
+                            dict_temp_folder[add_dict['Path']] = unique_id
                         else:
                             continue
-                addDict['unique_id'] = unique_id
-                addDict['Date'] = time.strftime("%d-%b-%Y %H:%M:%S", time.gmtime(os.path.getctime(addDict['Path'])))
+                add_dict['unique_id'] = unique_id
+                add_dict['Date'] = time.strftime("%d-%b-%Y %H:%M:%S", time.gmtime(os.path.getctime(add_dict['Path'])))
                 unique_id = unique_id + 1
-                result.append(addDict)
+                result.append(add_dict)
         return result
 
 
 
-import sys
-import traceback
-
-
-
-
-
-def excepthook(exc_type, exc_value, exc_tb):
-    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
-    print("Oбнаружена ошибка !:", tb)
-#    QtWidgets.QApplication.quit()             # !!! если вы хотите, чтобы событие завершилось
-
-
-sys.excepthook = excepthook
 
 
 
