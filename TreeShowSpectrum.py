@@ -26,11 +26,13 @@ class ShowTreeView(QWidget):
 
     def Update (self):
         pass
+
     def AddMultiToShowAction(self,listItems):
         pass
 
     def AddSingleToShowAction(self, listItems):
         pass
+
     def openMenu(self, position):
             indexes = self.sender().selectedIndexes()
             mdlIdx = self.tree.indexAt(position)
@@ -51,7 +53,7 @@ class ShowTreeView(QWidget):
             self.__right_click_menu.exec_(self.sender().viewport().mapToGlobal(position))
 
 
-    def importData(self,dataList):
+    def import_data(self,dataList):
         self.data = dataList
         self.model.setRowCount(0)
         parent=self.model.invisibleRootItem()
