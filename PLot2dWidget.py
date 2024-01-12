@@ -8,7 +8,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 import numpy as np
 
-from DataClass import dataSpec, getScanNames, DataArray
+from DataClass import DataSpec, get_scan_names, DataArray
 from matplotlib.widgets import Cursor, RectangleSelector,CheckButtons
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -115,7 +115,7 @@ class MplCanvas(FigureCanvasQTAgg):
                     self.RectangleSelectorCordinats[3] = self.RectangleSelectorCordinats[3]/self.YrecalcValue
 
             YrecValue = None
-        self.data.recalculationXY(XrecValue,YrecValue)
+        self.data.recalculation_xy(XrecValue, YrecValue)
         self.setRectangeSelector(self.RectangleSelectorCordinats)
         self.ShowData()
 
@@ -134,7 +134,7 @@ class MplCanvas(FigureCanvasQTAgg):
             self.parent.toolbar.Yleft.setValue(self.RectangleSelectorCordinats[2])
             self.parent.toolbar.Yrigth.setValue(self.RectangleSelectorCordinats[3])
 
-    def setRectangeSelector(self,RectangleSelectorCordinats):
+    def setRectangeSelector(self, RectangleSelectorCordinats):
         self.RectangleSelectorCordinats=RectangleSelectorCordinats
         self.changeRectangeSelectorByMouse()
 
@@ -257,7 +257,7 @@ class MyNavigationToolbar(NavigationToolbar):
 
 
 class ChangeNumberOfSpectraWidget(QtWidgets.QWidget):
-    def __init__(self,parent=None):
+    def __init__(self, parent=None):
         super(ChangeNumberOfSpectraWidget, self).__init__()
         self.SliderSpectra = QtWidgets.QSlider(self, orientation = QtCore.Qt.Orientation.Horizontal)
         self.LeftButton = QtWidgets.QPushButton("<", self)
@@ -304,8 +304,6 @@ class Plot2DWidget(QtWidgets.QWidget):
         self.data = data
         self.dataListNumber = []
 
-
-
         self.toolbarScanSpectra.NumberSpectra.valueChanged.connect(self.shangeNumber)
         self.toolbarScanSpectra.SliderSpectra.valueChanged.connect(self.sliderMove)
         self.toolbarScanSpectra.LeftButton.clicked.connect(self.pushLeftButton)
@@ -313,8 +311,8 @@ class Plot2DWidget(QtWidgets.QWidget):
 
     def ShowDataSpectrums(self, data):
         self.data = data
-        self.dataListScan = data.getListOfFirstColums()
-        self.NameColums= data.getListOfScanColums()
+        self.dataListScan = (data.get_list_of_first_colum())
+        self.NameColums = data.get_list_of_scan_colum()
         self.updateNumberOfSpectrum()
         self.showNextSpectrum(0)
 
@@ -323,7 +321,6 @@ class Plot2DWidget(QtWidgets.QWidget):
             self.toolbarScanSpectra.LabelValue.setText("ROI")
             self.toolbarScanSpectra.ValueOffSpectra.setText("OK")
             self.toolbarScanSpectra.setNumberOfSpectra(0)
-
         else:
             self.toolbarScanSpectra.setNumberOfSpectra(len(self.dataListScan)-1)
             self.toolbarScanSpectra.LabelValue.setText(self.NameColums[0])
@@ -332,7 +329,7 @@ class Plot2DWidget(QtWidgets.QWidget):
         self.toolbarScanSpectra.NumberSpectra.setValue(0)
 
     def showNextSpectrum(self, Number):
-        self.ShowSingleData(self.data.ResultSpectra[Number])
+        self.ShowSingleData(self.data.result_spectra[Number])
         self.toolbarScanSpectra.ValueOffSpectra.setText(str(self.dataListScan[Number]))
 
     def pushLeftButton(self):
@@ -342,7 +339,7 @@ class Plot2DWidget(QtWidgets.QWidget):
 
     def pushRigthButton(self):
         value = self.toolbarScanSpectra.SliderSpectra.value()+1
-        if value<=self.toolbarScanSpectra.SliderSpectra.maximum():
+        if value <= self.toolbarScanSpectra.SliderSpectra.maximum():
             self.toolbarScanSpectra.SliderSpectra.setValue(value)
 
     def shangeNumber(self):
@@ -352,11 +349,6 @@ class Plot2DWidget(QtWidgets.QWidget):
         value = self.toolbarScanSpectra.SliderSpectra.value()
         self.showNextSpectrum(value)
         self.toolbarScanSpectra.NumberSpectra.setValue(value)
-
-
-
-
-
 
     def ShowSingleData(self, data):
         self.canvas.ShowData(data)
@@ -383,11 +375,11 @@ if __name__== "__main__":
     else:
             DirPath = '~/Documents/GinaSpectrum/'
 
-    ScanList = getScanNames(DirPath)
-    a = dataSpec(DirPath, ScanList[0])
+    ScanList = get_scan_names(DirPath)
+    a = DataSpec(DirPath, ScanList[0])
     a.update()
-    ScanData = dataSpec(DirPath, "Spectrum_3277570")
-    ARRAY=ScanData.ResultSpectra[0]
+    ScanData = DataSpec(DirPath, "Spectrum_3277570")
+    ARRAY=ScanData.result_spectra[0]
     w = Plot2DWidget()
     w.ShowDataSpectrums(a)
     w.show()

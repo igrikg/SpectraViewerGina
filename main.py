@@ -6,7 +6,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-from DataClass import dataSpec
+from DataClass import DataSpec
 
 from Tree import TreeOfDataFolder
 from TreeShowSpectrum import ShowTreeView
@@ -71,12 +71,12 @@ class MainWindow(QWidget):
         self.ShowTreeWidget.import_data(data_list)
         self.shows_data_classes = []
         for line in data_list:
-            self.shows_data_classes.append(dataSpec(os.path.dirname(line['Path']), line['Name']))
+            self.shows_data_classes.append(DataSpec(os.path.dirname(line['Path']), line['Name']))
         self.PlotMapWidget.ShowDataSpectrums(self.shows_data_classes[0])
         self.PlotResultWidget.clear()
         for Spectra in self.shows_data_classes:
-            plots1d=Spectra.getSumPlot(self.PlotMapWidget.canvas.getRangeSum())
-            self.PlotResultWidget.showPlots(plots1d,Spectra.ScanName)
+            plots1d=Spectra.get_sum_plot(self.PlotMapWidget.canvas.getRangeSum())
+            self.PlotResultWidget.show_plots(plots1d, Spectra.scan_name)
 
     def update_timer(self):
         self.TreeWidget.update_data()
@@ -87,13 +87,13 @@ class MainWindow(QWidget):
     def end_timer(self):
         self.timer.stop()
 
-import sys
+
 import traceback
 
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
     print("Oбнаружена ошибка !:", tb)
-#    QtWidgets.QApplication.quit()             # !!! если вы хотите, чтобы событие завершилось
+
 sys.excepthook = excepthook
 
 if __name__ == '__main__':
